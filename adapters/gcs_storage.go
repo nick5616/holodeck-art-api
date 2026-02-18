@@ -90,8 +90,11 @@ func (g *GCSStorage) ListFavorites(ctx context.Context) ([]models.ArtPiece, erro
 		// Generate signed URL
 		url, err := g.GetSignedURL(ctx, attrs.Name)
 		if err != nil {
+			fmt.Printf("ERROR generating signed URL for %s: %v\n", attrs.Name, err)
 			continue // Skip this one if URL generation fails
 		}
+		
+		fmt.Printf("Successfully generated URL for %s\n", attrs.Name)
 		
 		uploadedAt, _ := time.Parse(time.RFC3339, attrs.Metadata["uploadedAt"])
 		
@@ -104,6 +107,7 @@ func (g *GCSStorage) ListFavorites(ctx context.Context) ([]models.ArtPiece, erro
 		})
 	}
 	
+	fmt.Printf("Total objects: %d, Favorites: %d, Pieces returned: %d\n", objectCount, favoriteCount, len(pieces))
 	return pieces, nil
 }
 
