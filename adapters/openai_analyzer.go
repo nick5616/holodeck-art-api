@@ -68,11 +68,26 @@ Return ONLY valid JSON in this exact format:
 		return models.AIAnalysis{}, fmt.Errorf("failed to parse AI response: %w", err)
 	}
 	
-	// Convert comma-separated tags to array
-	analysis.Tags = strings.Split(analysis.Tags[0], ",")
-	for i := range analysis.Tags {
-		analysis.Tags[i] = strings.TrimSpace(analysis.Tags[i])
+	// Parse the JSON response from OpenAI
+	var rawResponse struct {
+		Title string `json:"title"`
+		Tags  string `json:"tags"`  // OpenAI returns comma-separated string
 	}
 	
-	return analysis, nil
+	content = resp.Choices[0].Message.Content
+	if err := json.Unmarshal([]byte(content), &rawResponse); err != nil {
+		return models.AIAnalysis{}, fmt.Errorf("failed to parse AI response: %w", err)
+	}
+	
+	// Convert comma-separated string to array
+	tags := strings.Split(rawResponse.Tags, ",")
+	for i := range tags {
+		tags[i] = strings.TrimSpace(tags[i])
+	}
+	
+	return models.AIAnalysis{
+		Title: rawResponse.Title,
+		Tags:  tags,
+	}, nil
+	
 }
