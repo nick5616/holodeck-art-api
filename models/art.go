@@ -11,8 +11,8 @@ type ArtPiece struct {
 }
 
 type AIAnalysis struct {
-	Title string `json:"title"`
-	Tags  string `json:"tags"`
+	Title string   `json:"title"`
+	Tags  []string `json:"tags"`
 }
 
 type Metadata struct {
