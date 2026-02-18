@@ -1,0 +1,5 @@
+.git
+.env
+*.json
+README.md
+test.jpg
