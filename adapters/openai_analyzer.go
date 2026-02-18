@@ -60,21 +60,21 @@ Return ONLY valid JSON in this exact format:
 		return models.AIAnalysis{}, fmt.Errorf("no response from OpenAI")
 	}
 	
-	// Parse JSON response
-	content := resp.Choices[0].Message.Content
-	var analysis models.AIAnalysis
-	
-	if err := json.Unmarshal([]byte(content), &analysis); err != nil {
-		return models.AIAnalysis{}, fmt.Errorf("failed to parse AI response: %w", err)
-	}
-	
-	// Parse the JSON response from OpenAI
+	// Parse JSON response - use intermediate struct
 	var rawResponse struct {
 		Title string `json:"title"`
-		Tags  string `json:"tags"`  // OpenAI returns comma-separated string
+		Tags  string `json:"tags"`
 	}
-	
-	content = resp.Choices[0].Message.Content
+
+	content := resp.Choices[0].Message.Content
+
+	// Strip markdown code blocks if present
+	content = strings.TrimSpace(content)
+	content = strings.TrimPrefix(content, "```json")
+	content = strings.TrimPrefix(content, "```")
+	content = strings.TrimSuffix(content, "```")
+	content = strings.TrimSpace(content)
+
 	if err := json.Unmarshal([]byte(content), &rawResponse); err != nil {
 		return models.AIAnalysis{}, fmt.Errorf("failed to parse AI response: %w", err)
 	}
@@ -87,7 +87,7 @@ Return ONLY valid JSON in this exact format:
 	
 	return models.AIAnalysis{
 		Title: rawResponse.Title,
-		Tags:  tags,
+		Tags:  tags,  // Now it's an array
 	}, nil
 	
 }

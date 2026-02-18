@@ -24,20 +24,20 @@ func NewArtService(storage StorageProvider, ai AIProvider) *ArtService {
 
 // SubmitArt handles the concurrent upload + AI analysis pipeline
 func (s *ArtService) SubmitArt(ctx context.Context, imgData []byte) (*models.SubmissionResult, error) {
-	g, ctx := errgroup.WithContext(ctx)
+	g, gctx := errgroup.WithContext(ctx)  // Rename to gctx
 	
 	var objectID string
 	var analysis models.AIAnalysis
 	
 	// Concurrent execution: Upload to GCS + Analyze with AI
 	g.Go(func() error {
-		id, err := s.storage.Save(ctx, imgData)
+		id, err := s.storage.Save(gctx, imgData)  // Use gctx here
 		objectID = id
 		return err
 	})
 	
 	g.Go(func() error {
-		res, err := s.ai.AnalyzeImage(ctx, imgData)
+		res, err := s.ai.AnalyzeImage(gctx, imgData)  // Use gctx here
 		analysis = res
 		return err
 	})
@@ -48,6 +48,7 @@ func (s *ArtService) SubmitArt(ctx context.Context, imgData []byte) (*models.Sub
 	}
 	
 	// Update metadata after both operations succeed
+	// Use the ORIGINAL context, not the errgroup context
 	meta := models.Metadata{
 		Title:      analysis.Title,
 		Tags:       strings.Join(analysis.Tags, ","),
@@ -55,7 +56,7 @@ func (s *ArtService) SubmitArt(ctx context.Context, imgData []byte) (*models.Sub
 		UploadedAt: time.Now().Format(time.RFC3339),
 	}
 	
-	if err := s.storage.SetMetadata(ctx, objectID, meta); err != nil {
+	if err := s.storage.SetMetadata(ctx, objectID, meta); err != nil {  // Use ctx, not gctx
 		return nil, fmt.Errorf("failed to set metadata: %w", err)
 	}
 	

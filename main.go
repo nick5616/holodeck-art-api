@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/nick5616/holodeck-art-api/adapters"
 	"github.com/nick5616/holodeck-art-api/config"
 	"github.com/nick5616/holodeck-art-api/handlers"
@@ -17,6 +18,10 @@ import (
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables")
+	}
+	
 	// Load configuration
 	cfg := config.Load()
 	
