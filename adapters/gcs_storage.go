@@ -65,6 +65,9 @@ func (g *GCSStorage) ListFavorites(ctx context.Context) ([]models.ArtPiece, erro
 	var pieces []models.ArtPiece
 	
 	it := g.client.Bucket(g.bucketName).Objects(ctx, nil)
+	objectCount := 0
+	favoriteCount := 0
+	
 	for {
 		attrs, err := it.Next()
 		if err == iterator.Done {
@@ -74,10 +77,15 @@ func (g *GCSStorage) ListFavorites(ctx context.Context) ([]models.ArtPiece, erro
 			return nil, fmt.Errorf("failed to iterate objects: %w", err)
 		}
 		
+		objectCount++
+		fmt.Printf("Found object: %s, isFavorite=%s\n", attrs.Name, attrs.Metadata["isFavorite"])
+		
 		// Filter by isFavorite metadata
 		if attrs.Metadata["isFavorite"] != "true" {
 			continue
 		}
+		
+		favoriteCount++
 		
 		// Generate signed URL
 		url, err := g.GetSignedURL(ctx, attrs.Name)
